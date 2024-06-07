@@ -1,0 +1,2 @@
+class StreamConsumer:
+    pass

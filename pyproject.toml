@@ -7,7 +7,7 @@ name = "redis_canal"
 description = "redis_canal"
 keywords = ["redis_canal"]
 requires-python = ">=3.10"
-dependencies = ["redis>=4.2.0rc1", "pydantic>=2", 'pluggy', 'loguru', "anyio"]
+dependencies = ["redis>=4.2.0rc1", "pydantic>=2", 'pluggy', 'loguru', "anyio", "brq"]
 dynamic = ["version"]
 classifiers = [
     "Programming Language :: Python :: 3",

@@ -9,9 +9,9 @@ from uuid import uuid4
 import pytest
 import redis
 import redis.asyncio
+from brq.tools import get_redis_url
 
 import docker
-from redis_canal.tools import get_redis_url
 
 
 def get_port():
