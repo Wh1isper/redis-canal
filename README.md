@@ -38,5 +38,5 @@ pip install -e .[test]
 Run unit-test before PR
 
 ```
-pytest -v
+pytest -v tests
 ```
