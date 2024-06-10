@@ -1,12 +1,24 @@
 import asyncio
 import contextlib
+import functools
+import inspect
 from contextlib import asynccontextmanager
 from datetime import datetime
+from functools import wraps
 from typing import Any, AsyncGenerator
 
+import anyio
 import redis.asyncio as redis
 
 from redis_canal.log import logger
+
+
+def coro(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
 
 
 async def get_current_timestamp(
@@ -73,3 +85,17 @@ async def get_redis_client(
         yield redis_client
     finally:
         await redis_client.aclose()
+
+
+def ensure_awaitable(func):
+    if inspect.iscoroutinefunction(func):
+        return func
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        nonlocal func
+        if kwargs:
+            func = functools.partial(func, **kwargs)
+        return await anyio.to_thread.run_sync(func, *args)
+
+    return wrapper

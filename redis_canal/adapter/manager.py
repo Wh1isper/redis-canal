@@ -81,7 +81,7 @@ class AdapterManager(metaclass=Singleton):
             return
         self._registed_cls[cls_name] = cls
 
-    def init(self, c, *args, **kwargs: dict[str, Any]):
+    def init(self, c, *args, **kwargs: dict[str, Any]) -> plugin.Adapter:
         """
         Init a new subclass of plugin.Adapter.
 

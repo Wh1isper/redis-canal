@@ -14,6 +14,7 @@ dependencies = [
     'loguru',
     "anyio",
     "click",
+    "anyio"
 ]
 dynamic = ["version"]
 classifiers = [

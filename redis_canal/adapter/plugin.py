@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Awaitable
+from typing import TYPE_CHECKING, Awaitable
 
 import pluggy
+
+if TYPE_CHECKING:
+    from redis_canal.models import Message
 
 project_name = "redis_canal.adapter"
 """
@@ -67,4 +70,10 @@ class Adapter:
     register_name: str
 
     def __init__(self, *args, **kwargs):
+        pass
+
+    async def emit(self, message: "Message") -> None:
+        pass
+
+    async def poll(self, process_func: Awaitable["Message"], *args, **kwargs) -> None:
         pass

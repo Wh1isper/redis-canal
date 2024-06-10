@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from redis_canal.adapter.plugin import Adapter, hookimpl
 
 
@@ -6,13 +8,17 @@ class SQSAdapter(Adapter):
 
     def __init__(
         self,
-        sqs_url: str,
+        queue_url: str,
+        poll_interval: int,
+        poll_size: int,
         *args,
         **kwargs,
     ):
-        pass
+        self.queue_url = queue_url
+        self.poll_interval = poll_interval
+        self.poll_size = poll_size
 
-    @property
+    @cached_property
     def client(self):
         try:
             import boto3
