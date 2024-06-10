@@ -1,5 +1,5 @@
 import asyncio
-from signal import signal
+import signal
 
 from redis_canal.adapter.manager import AdapterManager
 from redis_canal.adapter.plugin import Adapter
@@ -73,7 +73,6 @@ class Agent:
         for sig in stop_signals:
             loop.add_signal_handler(sig, lambda: asyncio.create_task(_stop()))
 
-        logger.info(f"Starting {len(self.runnables)} consumer...")
         await self.start()
         logger.info(f"Consumer started, waiting for signals {stop_signals}...")
         await stop_event.wait()
