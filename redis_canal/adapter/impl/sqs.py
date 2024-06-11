@@ -1,6 +1,9 @@
 from functools import cached_property
+from typing import Awaitable
 
 from redis_canal.adapter.plugin import Adapter, hookimpl
+from redis_canal.log import logger
+from redis_canal.models import Message
 
 
 class SQSAdapter(Adapter):
@@ -15,7 +18,14 @@ class SQSAdapter(Adapter):
         **kwargs,
     ):
         super().__init__(queue_url, poll_time, poll_size, *args, **kwargs)
-        self.create_queue_if_not_exists()
+
+        if self.poll_time < 1:
+            self.poll_time = 1
+        if self.poll_size > 10:
+            self.poll_size = 10
+
+        self.poll_time = self.poll_time
+        self.ensure_queue_exists()
 
     @cached_property
     def client(self):
@@ -27,7 +37,19 @@ class SQSAdapter(Adapter):
             )
         return boto3.client("sqs")
 
-    def create_queue_if_not_exists(self):
+    def ensure_queue_exists(self):
+        queue_name = self.queue_url.split("/")[-1]
+        try:
+            if self.client.get_queue_url(QueueName=queue_name):
+                return
+        except self.client.exceptions.QueueDoesNotExist:
+            logger.error(f"Queue {self.queue_url} does not exist")
+            raise
+
+    async def emit(self, message: Message) -> None:
+        pass
+
+    async def poll(self, process_func: Awaitable[Message], *args, **kwargs) -> None:
         pass
 
 
