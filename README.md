@@ -20,7 +20,7 @@ Motivation: Redis provided on the cloud is usually only available within a VPC a
 
 Welcome to contribute more queue service, see [adapter/impl](./redis_canal/adapter/impl/) for more details.
 
-We also support the plugin system, if you adapter can also be imported as a third-party library and used. See [example](./example/extension/custom-adapter/) for more details.
+We also support the plugin system, the adapter can also be imported as a third-party library. See [example](./example/extension/custom-adapter/) for more details.
 
 ## Install
 
