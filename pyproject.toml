@@ -28,7 +28,6 @@ classifiers = [
 all = ["redis_canal[sqs]"]
 sqs = ["boto3"]
 test = [
-    "brq",              # brq is a redis stream based job queue, we use this to test
     "pytest",
     "pytest-asyncio",
     "docker",

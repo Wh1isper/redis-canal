@@ -11,6 +11,8 @@ import redis
 import redis.asyncio
 
 import docker
+from redis_canal.adapter.manager import AdapterManager
+from redis_canal.agent import QueueToStream, StreamToQueue
 from redis_canal.tools import get_redis_url
 
 
@@ -75,3 +77,66 @@ async def async_redis_client(redis_port):
 @pytest.fixture
 def case_id():
     return uuid4().hex
+
+
+@pytest.fixture(scope="session")
+def mock_adapter_manager():
+    AdapterManager._instances.clear()
+    a = AdapterManager()
+
+    from mock import mock_adapter
+
+    a._load_dir(mock_adapter)
+    yield a
+    AdapterManager._instances.clear()
+
+
+@pytest.fixture
+def redis_key(case_id):
+    return f"test:{case_id}"
+
+
+@pytest.fixture
+async def stream_key(async_redis_client, redis_key):
+    await async_redis_client.xadd(name=redis_key, fields={"f1": "v1", "f2": "v2"})
+    await async_redis_client.xadd(name="test:other", fields={"f1": "v1", "f2": "v2"})
+    yield redis_key
+    await async_redis_client.delete(redis_key)
+
+
+@pytest.fixture(params=[True, False])
+def dynamic(request):
+    yield request.param
+
+
+@pytest.fixture
+def stream_to_queue(mock_adapter_manager, async_redis_client, stream_key, dynamic):
+    s2q = StreamToQueue(
+        async_redis_client,
+        queue_type="mock",
+        queue_url="mock",
+        poll_interval=0.1,
+        poll_time=0.1,
+        poll_size=10,
+        redis_stream_key=stream_key,
+        redis_stream_key_prefix="test:",
+        remove_if_enqueued=True,
+        dynamic=dynamic,
+    )
+    s2q.adapter_manager = mock_adapter_manager
+    return s2q
+
+
+@pytest.fixture
+def queue_to_stream(mock_adapter_manager, async_redis_client):
+    q2s = QueueToStream(
+        async_redis_client,
+        queue_type="mock",
+        queue_url="mock",
+        poll_interval=0.1,
+        poll_time=0.1,
+        poll_size=10,
+        maxlen=10,
+    )
+    q2s.adapter_manager = mock_adapter_manager
+    return q2s

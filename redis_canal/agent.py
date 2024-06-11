@@ -1,10 +1,12 @@
 import asyncio
 import signal
+from functools import cached_property
 from uuid import uuid4
 
 import redis.asyncio as redis
 
 from redis_canal.adapter.manager import AdapterManager
+from redis_canal.adapter.plugin import Adapter
 from redis_canal.log import logger
 from redis_canal.models import Message
 from redis_canal.tools import event_wait
@@ -33,12 +35,18 @@ class Agent:
         self.poll_interval = poll_interval
         self.poll_time = poll_time
         self.poll_size = poll_size
+        self._args = args
+        self._kwargs = kwargs
 
-        self.adapter = self.adapter_manager.init(
-            queue_type,
-            queue_url=queue_url,
-            poll_time=poll_time,
-            poll_size=poll_size,
+    @cached_property
+    def adapter(self) -> Adapter:
+        return self.adapter_manager.init(
+            self.queue_type,
+            queue_url=self.queue_url,
+            poll_time=self.poll_time,
+            poll_size=self.poll_size,
+            *self._args,
+            **self._kwargs,
         )
 
     async def start(self):
@@ -143,10 +151,10 @@ class StreamToQueue(Agent):
         self.consumer_id = uuid4().hex
 
     async def run(self):
-        keys = self._stream_keys or await self._get_redis_stream_keys()
-        if not self.dynamic and self._stream_keys is None:
-            logger.info(f"Disable dynamic mode, cached {len(keys)} stream keys")
-            self._stream_keys = keys
+        if self.dynamic:
+            keys = await self._get_redis_stream_keys()
+        else:
+            keys = self._stream_keys or await self._get_redis_stream_keys()
 
         if not keys:
             logger.debug(
@@ -157,10 +165,10 @@ class StreamToQueue(Agent):
         for key in keys:
             logger.debug(f"Polling and emitting stream {key}")
             await self._poll_stream_and_emit(key)
+        logger.info(f"{len(keys)} streams polled and emitted")
 
     async def _get_redis_stream_keys(self) -> list[str]:
         keys = []
-
         if self.redis_stream_key:
             # Check is stream
             try:
@@ -178,10 +186,22 @@ class StreamToQueue(Agent):
             keys.extend(
                 [k async for k in self.redis_client.scan_iter(match=scan_key, _type="stream")]
             )
+        keys = list(set(keys))
+        await asyncio.gather(*[self.ensure_group(key) for key in keys])
+        self._stream_keys = keys
         return keys
 
+    async def ensure_group(self, key):
+        if self._stream_keys and key in self._stream_keys:
+            # Already created
+            return
+        try:
+            await self.redis_client.xgroup_create(key, self.group_name, 0, mkstream=True)
+        except redis.ResponseError as e:
+            if e.args[0] != "BUSYGROUP Consumer Group name already exists":
+                raise
+
     async def _poll_stream_and_emit(self, key) -> None:
-        # We use xautoclaim to process all unacked messages
         while True:
             messgae_id = "0-0"
             claimed_messages = (
@@ -197,10 +217,28 @@ class StreamToQueue(Agent):
             if not claimed_messages:
                 break
 
-            asyncio.gather(
+            await asyncio.gather(
                 *[
                     self._emit_one(key, message_id, message_content)
                     for message_id, message_content in claimed_messages
+                ]
+            )
+
+        while True:
+            poll_result = await self.redis_client.xreadgroup(
+                groupname=self.group_name,
+                consumername=self.consumer_id,
+                streams={key: ">"},
+                count=self.poll_size,
+                block=int(self.poll_time * 1000),
+            )
+            if not poll_result:
+                break
+            _, messages = poll_result[0]
+            await asyncio.gather(
+                *[
+                    self._emit_one(key, message_id, message_content)
+                    for message_id, message_content in messages
                 ]
             )
 
@@ -258,6 +296,7 @@ class QueueToStream(Agent):
                 id=f"{main_id}-*",
                 maxlen=self.maxlen,
             )
+            logger.debug(f"Pushed message to stream {message.redis_key}")
         except Exception as e:
             logger.exception(e)
 

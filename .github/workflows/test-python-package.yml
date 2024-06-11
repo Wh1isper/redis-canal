@@ -30,7 +30,7 @@ jobs:
                   redis-canal --help
             - name: Test with pytest
               run: |
-                  pytest -vv --cov-config=.coveragerc --cov-report term-missing --cov=redis-canal/ tests
+                  pytest -vv --cov-config=.coveragerc --cov-report term-missing --cov=redis_canal/ tests
             - name: Upload coverage reports to Codecov
               uses: codecov/codecov-action@v4.0.1
               with:

@@ -1,0 +1,5 @@
+[run]
+omit =
+    */tests/*
+    redis_canal/tools.py
+    redis_canal/cli.py
