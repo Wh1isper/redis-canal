@@ -16,7 +16,7 @@ def sqs_adapter(case_id):
         queue_url = sqs.create_queue(QueueName=queue_name)["QueueUrl"]
     except sqs.exceptions.QueueAlreadyExists:
         pass
-    except sqs.exceptions.MissingCredentialsError:
+    except Exception:
         pytest.skip("boto3 is not configured")
 
     adapter = SQSAdapter(
