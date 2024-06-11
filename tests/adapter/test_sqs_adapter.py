@@ -1,6 +1,7 @@
 import pytest
 
 from redis_canal.adapter.impl.sqs import SQSAdapter
+from redis_canal.models import Message
 
 
 @pytest.fixture
@@ -35,4 +36,17 @@ def sqs_adapter(case_id):
 
 
 async def test_sqs_adapter(sqs_adapter):
-    pass
+    message_input = Message(
+        redis_key="test",
+        message_id="123-345",
+        message_content={"f1": "v1"},
+    )
+
+    async def validate(message):
+        assert message == message_input
+        print("validated!")
+
+    await sqs_adapter.emit(message_input)
+    await sqs_adapter.poll(
+        process_func=validate,
+    )

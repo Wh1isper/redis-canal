@@ -1,9 +1,11 @@
+import asyncio
 from functools import cached_property
 from typing import Awaitable
 
 from redis_canal.adapter.plugin import Adapter, hookimpl
 from redis_canal.log import logger
 from redis_canal.models import Message
+from redis_canal.tools import run_in_threadpool
 
 
 class SQSAdapter(Adapter):
@@ -47,10 +49,56 @@ class SQSAdapter(Adapter):
             raise
 
     async def emit(self, message: Message) -> None:
-        pass
+        await run_in_threadpool(
+            self.client.send_message,
+            QueueUrl=self.queue_url,
+            MessageBody=message.model_dump_json(),
+        )
+
+    def _poll_message(self) -> list[tuple[Message, str]]:
+        valid_messages = []
+        response = self.client.receive_message(
+            QueueUrl=self.queue_url,
+            MaxNumberOfMessages=self.poll_size,
+            WaitTimeSeconds=self.poll_time,
+        )
+        if "Messages" not in response:
+            return valid_messages
+
+        for message in response["Messages"]:
+            receipt_handle = message["ReceiptHandle"]
+            try:
+                body = message["Body"]
+                message = Message.model_validate_json(body)
+            except Exception as e:
+                logger.error(f"Error parsing message {body}: {e}")
+                logger.exception(e)
+            else:
+                valid_messages.append((message, receipt_handle))
+        return valid_messages
+
+    async def _process_messages(
+        self, process_func: Awaitable[Message], message: Message, receipt_handle: str
+    ):
+        try:
+            await process_func(message)
+        except Exception as e:
+            logger.error(f"Error processing message {message}: {e}")
+        else:
+            await run_in_threadpool(
+                self.client.delete_message,
+                QueueUrl=self.queue_url,
+                ReceiptHandle=receipt_handle,
+            )
 
     async def poll(self, process_func: Awaitable[Message], *args, **kwargs) -> None:
-        pass
+        response_and_receipt_handles = await run_in_threadpool(self._poll_message)
+        await asyncio.gather(
+            *[
+                self._process_messages(process_func, message, receipt_handle)
+                for message, receipt_handle in response_and_receipt_handles
+            ]
+        )
 
 
 @hookimpl

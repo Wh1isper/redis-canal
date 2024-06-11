@@ -2,15 +2,29 @@ import asyncio
 import contextlib
 import functools
 import inspect
+import typing
 from contextlib import asynccontextmanager
 from datetime import datetime
 from functools import wraps
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, ParamSpec, TypeVar
 
 import anyio
 import redis.asyncio as redis
 
 from redis_canal.log import logger
+
+P = ParamSpec("P")
+T = TypeVar("T")
+
+
+async def run_in_threadpool(func: typing.Callable[P, T], *args: P.args, **kwargs: P.kwargs) -> T:
+    """
+    From fastapi.concurrency
+    """
+    if kwargs:  # pragma: no cover
+        # run_sync doesn't accept 'kwargs', so bind them in here
+        func = functools.partial(func, **kwargs)
+    return await anyio.to_thread.run_sync(func, *args)
 
 
 def coro(f):
