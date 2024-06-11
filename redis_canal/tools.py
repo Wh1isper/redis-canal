@@ -1,4 +1,51 @@
+import asyncio
+import contextlib
+import functools
+import inspect
+from contextlib import asynccontextmanager
+from datetime import datetime
+from functools import wraps
+from typing import Any, AsyncGenerator
+
+import anyio
+import redis.asyncio as redis
+
 from redis_canal.log import logger
+
+
+def coro(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return asyncio.run(f(*args, **kwargs))
+
+    return wrapper
+
+
+async def get_current_timestamp(
+    redis_client: redis.Redis | redis.RedisCluster,
+) -> int:
+    return int((await redis_client.time())[0])
+
+
+async def get_current_timestamp_ms(
+    redis_client: redis.Redis | redis.RedisCluster,
+) -> int:
+    return int((await redis_client.time())[0] * 1000 + (await redis_client.time())[1] / 1000)
+
+
+def timestamp_to_datetime(timestamp: int, tz=None) -> datetime:
+    return datetime.fromtimestamp(timestamp, tz=tz)
+
+
+def timestamp_ms_to_datetime(timestamp_ms: int) -> datetime:
+    return datetime.fromtimestamp(timestamp_ms / 1000)
+
+
+async def event_wait(evt, timeout):
+    # suppress TimeoutError because we'll return False in case of timeout
+    with contextlib.suppress(asyncio.TimeoutError):
+        await asyncio.wait_for(evt.wait(), timeout)
+    return evt.is_set()
 
 
 def get_redis_url(
@@ -23,3 +70,32 @@ def get_redis_url(
         return f"rediss://{url}"
     else:
         return f"redis://{url}"
+
+
+@asynccontextmanager
+async def get_redis_client(
+    redis_url,
+    is_cluster: bool = False,
+) -> AsyncGenerator[Any, redis.Redis | redis.RedisCluster]:
+    if is_cluster:
+        redis_client = redis.RedisCluster.from_url(redis_url, decode_responses=True)
+    else:
+        redis_client = redis.from_url(redis_url, decode_responses=True)
+    try:
+        yield redis_client
+    finally:
+        await redis_client.aclose()
+
+
+def ensure_awaitable(func):
+    if inspect.iscoroutinefunction(func):
+        return func
+
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        nonlocal func
+        if kwargs:
+            func = functools.partial(func, **kwargs)
+        return await anyio.to_thread.run_sync(func, *args)
+
+    return wrapper

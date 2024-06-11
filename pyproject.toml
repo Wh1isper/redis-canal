@@ -7,7 +7,15 @@ name = "redis_canal"
 description = "redis_canal"
 keywords = ["redis_canal"]
 requires-python = ">=3.10"
-dependencies = ["redis>=4.2.0rc1", "pydantic>=2", 'pluggy', 'loguru', "anyio"]
+dependencies = [
+    "redis>=4.2.0rc1",
+    "pydantic>=2",
+    'pluggy',
+    'loguru',
+    "anyio",
+    "click",
+    "anyio",
+]
 dynamic = ["version"]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -32,6 +40,10 @@ docs = ["Sphinx", "pydata-sphinx-theme", "sphinx-click", "autodoc_pydantic"]
 [[project.authors]]
 name = "wh1isper"
 email = "jizhongsheng957@gmail.com"
+
+
+[project.scripts]
+redis-canal = "redis_canal.cli:cli"
 
 [project.readme]
 file = "README.md"
