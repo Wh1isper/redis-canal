@@ -8,11 +8,19 @@
 
 # redis-canal
 
-Proxy redis stream from one to another through global queue service
+Proxy redis stream from one to another through global queue service.
+
+Motivation: Redis provided on the cloud is usually only available within a VPC and does not provide external access. We want to provide a way to synchronize messages across clouds without going through a VPN.
+
+![Architecture Overview](./assets/Architecture.png)
 
 ## Supported queue service
 
 - [x] AWS SQS
+
+Welcome to contribute more queue service, see [adapter/impl](./redis_canal/adapter/impl/) for more details.
+
+We also support the plugin system, if you adapter can also be imported as a third-party library and used. See [example](./example/extension/custom-adapter/) for more details.
 
 ## Install
 
