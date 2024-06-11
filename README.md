@@ -18,7 +18,7 @@ Or use docker image
 
 ## Usage
 
-TBD
+WIP
 
 ## Develop
 

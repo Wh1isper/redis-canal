@@ -87,10 +87,17 @@ from .envs import *
 )
 @click.option(
     "--poll-interval",
-    default=5,
+    default=1,
     help="Poll interval",
     type=int,
     envvar=POLL_INTERVAL_ENV,
+)
+@click.option(
+    "--poll-time",
+    default=1,
+    help="Poll time",
+    type=int,
+    envvar=POLL_TIME_ENV,
 )
 @click.option(
     "--poll-size",
@@ -105,6 +112,13 @@ from .envs import *
     help="Remove if enqueued",
     type=bool,
     envvar=REMOVE_IF_ENQUEUED_ENV,
+)
+@click.option(
+    "--dynamic",
+    default=True,
+    help="Get stream keys dynamically",
+    type=bool,
+    envvar=DYNAMIC_STREAM_KEY_ENV,
 )
 @coro
 async def stream_to_queue(
@@ -121,8 +135,10 @@ async def stream_to_queue(
     redis_stream_key,
     redis_stream_key_prefix,
     poll_interval,
+    poll_time,
     poll_size,
     remove_if_enqueued,
+    dynamic,
 ):
     redis_url = redis_url or get_redis_url(
         host=redis_host,
@@ -141,8 +157,10 @@ async def stream_to_queue(
             redis_stream_key=redis_stream_key,
             redis_stream_key_prefix=redis_stream_key_prefix,
             poll_interval=poll_interval,
+            poll_time=poll_time,
             poll_size=poll_size,
             remove_if_enqueued=remove_if_enqueued,
+            dynamic=dynamic,
         ).run_forever()
 
 
@@ -213,10 +231,17 @@ async def stream_to_queue(
 )
 @click.option(
     "--poll-interval",
-    default=5,
+    default=0.1,
     help="Poll interval",
     type=int,
     envvar=POLL_INTERVAL_ENV,
+)
+@click.option(
+    "--poll-time",
+    default=1,
+    help="Poll time",
+    type=int,
+    envvar=POLL_TIME_ENV,
 )
 @click.option(
     "--poll-size",
@@ -224,6 +249,13 @@ async def stream_to_queue(
     help="Poll size",
     type=int,
     envvar=POLL_SIZE_ENV,
+)
+@click.option(
+    "--maxlen",
+    default=1000,
+    help="Maxlen of stream",
+    type=int,
+    envvar=MAXLEN_ENV,
 )
 @coro
 async def queue_to_stream(
@@ -238,7 +270,9 @@ async def queue_to_stream(
     queue_type,
     queue_url,
     poll_interval,
+    poll_time,
     poll_size,
+    maxlen,
 ):
     redis_url = redis_url or get_redis_url(
         host=redis_host,
@@ -256,7 +290,9 @@ async def queue_to_stream(
             queue_type=queue_type,
             queue_url=queue_url,
             poll_interval=poll_interval,
+            poll_time=poll_time,
             poll_size=poll_size,
+            maxlen=maxlen,
         ).run_forever()
 
 
