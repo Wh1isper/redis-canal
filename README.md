@@ -8,6 +8,12 @@
 
 # redis-canal
 
+Proxy redis stream from one to another through global queue service
+
+## Supported queue service
+
+- [x] AWS SQS
+
 ## Install
 
 `pip install redis-canal[all]` for all components.
