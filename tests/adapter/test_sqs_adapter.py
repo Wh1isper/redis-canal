@@ -11,6 +11,9 @@ def sqs_adapter(case_id):
         sqs = boto3.client("sqs")
     except ImportError:
         pytest.skip("boto3 is not installed")
+    except Exception:
+        pytest.skip("boto3 is not configured")
+
     queue_name = f"redis-canal-test-{case_id}"
     try:
         queue_url = sqs.create_queue(QueueName=queue_name)["QueueUrl"]
