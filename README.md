@@ -32,7 +32,17 @@ Or use docker image
 
 ## Usage
 
-WIP
+Use CLI
+
+- `redis-canal stream-to-queue` to start a daemon to consume redis stream and push to global queue
+- `redis-canal queue-to-stream` to pull from global queue and push to redis stream
+
+CLI args support `envvar`, which you can refer to [envs.py](./redis_canal/envs.py).
+
+## TODO
+
+- More adapter for Google PubSub, Kafka, etc
+- Allows users to more easily configure the adapter(Now only support environment variables, within `Adapter`)
 
 ## Develop
 
@@ -54,3 +64,9 @@ Run unit-test before PR
 ```
 pytest -v tests
 ```
+
+### Develop sqs adapter
+
+You need to configure your AWS account first. See [AWS CLI docs](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) for more details.
+
+Make sure your account has `sqs:*` permission. Then you can run `pytest -v tests/adapter/test_sqs_adapter.py` to test it.

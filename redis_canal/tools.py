@@ -96,6 +96,7 @@ async def get_redis_client(
     else:
         redis_client = redis.from_url(redis_url, decode_responses=True)
     try:
+        await redis_client.ping()
         yield redis_client
     finally:
         await redis_client.aclose()
