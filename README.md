@@ -64,3 +64,9 @@ Run unit-test before PR
 ```
 pytest -v tests
 ```
+
+### Develop sqs adapter
+
+You need to configure your AWS account first. See [AWS CLI docs](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) for more details.
+
+Make sure your account has `sqs:*` permission. Then you can run `pytest -v tests/adapter/test_sqs_adapter.py` to test it.
