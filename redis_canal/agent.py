@@ -175,8 +175,8 @@ class StreamToQueue(Agent):
                 await self.redis_client.xinfo_stream(self.redis_stream_key)
             except redis.ResponseError:
                 logger.error(f"{self.redis_stream_key} is not a stream or does not exist")
-                raise
-            keys.append(self.redis_stream_key)
+            else:
+                keys.append(self.redis_stream_key)
 
         if self.redis_stream_key_prefix:
             if self.redis_stream_key_prefix == "*":
