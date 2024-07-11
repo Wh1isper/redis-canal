@@ -66,11 +66,11 @@ class AdapterManager(metaclass=Singleton):
 
     def register(self, cls: type[plugin.Adapter]):
         """
-        Register a new model, if the model is already registed, skip it.
+        Register a new module, if the module is already registed, skip it.
         """
 
         cls_name = self._normalize_name(cls.register_name)
-        logger.debug(f"Register for new model: {cls_name}")
+        logger.debug(f"Register for new module: {cls_name}")
         if cls in self._registed_cls.values():
             logger.warning(
                 f"SKIP: trying to register {cls} as '{cls_name}', but {cls_name} is already registed."
