@@ -16,3 +16,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN pip install --no-cache-dir $(echo /tmp/*.whl)[all]
 
 ENTRYPOINT ["tini", "--"]
+
+LABEL org.opencontainers.image.source=https://github.com/wh1isper/redis-canal
