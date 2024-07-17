@@ -24,6 +24,13 @@ jobs:
               with:
                   username: wh1isper
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+            - name: Login to Github Container Registry
+              uses: docker/login-action@v3
+              with:
+                  registry: ghcr.io
+                  username: wh1isper
+                  password: ${{ secrets.PAT }}
             - name: Build and push release
               id: docker_build_release_matrix
               uses: docker/build-push-action@v5
@@ -35,3 +42,14 @@ jobs:
                   file: ./docker/Dockerfile
                   push: true
                   tags: wh1isper/redis-canal:dev
+            - name: Build and push release
+              id: ghcr_docker_build_release_matrix
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  platforms: linux/amd64,linux/arm64/v8
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+                  file: ./docker/Dockerfile
+                  push: true
+                  tags: ghcr.io/wh1isper/redis-canal:dev
