@@ -288,15 +288,15 @@ class QueueToStream(Agent):
         self.maxlen = maxlen
 
     async def _xadd_to_redis(self, message: Message):
-        main_id = message.message_id.split("-")[0]
         try:
+            main_id = message.message_id.split("-")[0]
             await self.redis_client.xadd(
                 name=message.redis_key,
                 fields=message.message_content,
-                id=f"{main_id}-*",
+                id=f"*",
                 maxlen=self.maxlen,
             )
-            logger.debug(f"Pushed message to stream {message.redis_key}")
+            logger.debug(f"Pushed message {main_id} to stream {message.redis_key}")
         except Exception as e:
             logger.exception(e)
 
