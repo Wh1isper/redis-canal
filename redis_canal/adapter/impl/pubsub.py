@@ -9,7 +9,7 @@ from redis_canal.tools import run_in_threadpool
 
 
 class PubSubAdapter(Adapter):
-    pass
+    register_name = "pubsub"
 
 
 @hookimpl
