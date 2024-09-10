@@ -35,7 +35,7 @@ class SQSAdapter(Adapter):
             import boto3
         except ImportError:
             raise RuntimeError(
-                "boto3 is not installed, try install moriarty with `pip install moriarty[matrix]` for all components or `pip install moriarty[sqs]` for sqs only"
+                "boto3 is not installed, try install redis_canal with `pip install redis_canal[all]` for all components or `pip install redis_canal[sqs]` for sqs"
             )
         return boto3.client("sqs")
 

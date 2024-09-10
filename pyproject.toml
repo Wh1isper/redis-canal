@@ -25,8 +25,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-all = ["redis_canal[sqs]"]
+all = ["redis_canal[sqs, pubsub]"]
 sqs = ["boto3"]
+pubsub = ["google-cloud-pubsub"]
 test = [
     "pytest",
     "pytest-asyncio",

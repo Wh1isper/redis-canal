@@ -17,6 +17,7 @@ Motivation: Redis provided on the cloud is usually only available within a VPC a
 ## Supported queue service
 
 - [x] AWS SQS
+- [x] Google PubSub
 
 Welcome to contribute more queue service, see [adapter/impl](./redis_canal/adapter/impl/) for more details.
 
